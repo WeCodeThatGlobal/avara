@@ -3,34 +3,28 @@ import { Button, Heading } from "@medusajs/ui"
 
 const Hero = () => {
   return (
-    <div className="h-[75vh] w-full border-b border-ui-border-base relative bg-ui-bg-subtle">
-      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center small:p-32 gap-6">
-        <span>
-          <Heading
-            level="h1"
-            className="text-3xl leading-10 text-ui-fg-base font-normal"
-          >
-            Ecommerce Starter Template
-          </Heading>
-          <Heading
-            level="h2"
-            className="text-3xl leading-10 text-ui-fg-subtle font-normal"
-          >
-            Powered by Medusa and Next.js
-          </Heading>
-        </span>
-        <a
-          href="https://github.com/medusajs/nextjs-starter-medusa"
-          target="_blank"
-        >
-          <Button variant="secondary">
-            View on GitHub
-            <Github />
-          </Button>
-        </a>
+    <section className="w-full min-h-[70vh] bg-[#f8f9fb] flex items-center justify-center px-8 py-12">
+      <div className="max-w-7xl w-full flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="flex-1 flex flex-col items-start justify-center gap-6">
+          <span className="text-gray-400 text-lg font-medium">Flat 30% Off</span>
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-800 leading-tight">
+            Explore <span className="text-blue-400">Healthy</span>
+            <br />& Fresh Fruits
+          </h1>
+          <button className="mt-4 px-8 py-3 border-2 border-gray-400 rounded-md text-lg font-medium hover:bg-blue-50 transition">Shop Now</button>
+        </div>
+        <div className="flex-1 flex items-center justify-center relative">
+          {/* Decorative illustration from network */}
+          <img
+            src="https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=600&q=80"
+            alt="Healthy & Fresh Fruits"
+            className="max-w-full h-auto rounded-3xl shadow-lg"
+            style={{ minWidth: 320, maxHeight: 400 }}
+          />
+        </div>
       </div>
-    </div>
-  )
-}
+    </section>
+  );
+};
 
-export default Hero
+export default Hero;
