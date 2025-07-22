@@ -1,53 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import ProductCard from "@modules/common/components/ProductCard";
-
-const dummyProducts = [
-  {
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80",
-    name: "Mixed Fruits Chocolates Pack",
-    category: "Chocos",
-    price: "$25",
-    oldPrice: "$30",
-    rating: 4,
-    packInfo: "1 Pack",
-    badge: "NEW",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=400&q=80",
-    name: "Organic Apple Juice Pack",
-    category: "Juice",
-    price: "$15",
-    oldPrice: undefined,
-    rating: 4,
-    packInfo: "100 ml",
-    badge: "HOT",
-    stockStatus: "3 Left",
-    stockStatusColor: "text-blue-500",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?auto=format&fit=crop&w=400&q=80",
-    name: "Mixed Almond nuts juice Pack",
-    category: "Juice",
-    price: "$32",
-    oldPrice: "$39",
-    rating: 4,
-    packInfo: "250 g",
-    badge: "",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=400&q=80",
-    name: "Fresh Mango Slice Juice",
-    category: "Fruits",
-    price: "$25",
-    oldPrice: undefined,
-    rating: 4,
-    packInfo: "1 Pack",
-    badge: "SALE",
-    stockStatus: "Out Of Stock",
-    stockStatusColor: "text-gray-400",
-  },
-];
+import { ROUTES, getApiUrl } from "@lib/api";
+import { getApi } from "@lib/api-client";
 
 function getTimeLeft(targetDate: Date) {
   const now = new Date();
@@ -76,14 +31,34 @@ const DealOfTheDaySection: React.FC = () => {
   });
 
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(getTimeLeft(targetDate));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [targetDate]);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getApi(ROUTES.DEAL_OF_THE_DAY)
+      .then((res: { ok: any; json: () => any; }) => {
+        if (!res.ok) throw new Error("Failed to fetch deal of the day products");
+        return res.json();
+      })
+      .then((data: { products: any; }) => {
+        setProducts(data.products || []);
+        setLoading(false);
+      })
+      .catch((err: { message: any; }) => {
+        setError(err.message || "Unknown error");
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <section className="w-full py-12 bg-white">
@@ -102,7 +77,12 @@ const DealOfTheDaySection: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {dummyProducts.map((product, idx) => (
+          {loading && <div className="col-span-4 text-center text-gray-400">Loading deals...</div>}
+          {error && <div className="col-span-4 text-center text-red-500">{error}</div>}
+          {!loading && !error && products.length === 0 && (
+            <div className="col-span-4 text-center text-gray-400">No deals available.</div>
+          )}
+          {!loading && !error && products.map((product, idx) => (
             <ProductCard key={idx} {...product} />
           ))}
         </div>
