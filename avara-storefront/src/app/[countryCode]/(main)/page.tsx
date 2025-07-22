@@ -6,6 +6,7 @@ import BannerSection from "@modules/home/components/banner-section"
 import TestimonialCarousel from "@modules/home/components/TestimonialCarousel"
 import FeaturesSection from "@modules/home/components/FeaturesSection"
 import DealOfTheDaySection from "@modules/home/components/DealOfTheDaySection"
+
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
 
