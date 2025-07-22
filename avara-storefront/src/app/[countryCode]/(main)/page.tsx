@@ -4,6 +4,7 @@ import FeaturedProducts from "@modules/home/components/featured-products"
 import Hero from "@modules/home/components/hero"
 import BannerSection from "@modules/home/components/banner-section"
 import TestimonialCarousel from "@modules/home/components/TestimonialCarousel"
+
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
 
