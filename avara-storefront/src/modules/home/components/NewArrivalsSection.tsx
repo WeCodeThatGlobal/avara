@@ -101,13 +101,6 @@ const NewArrivalsSection: React.FC = () => {
             </h2>
             <p className="text-gray-400 text-lg">Shop online for new arrivals and get free shipping!</p>
           </div>
-          {/* Example filter navigation, not functional */}
-          <div className="flex items-center gap-4 text-base font-semibold">
-            <span className="text-gray-400">All</span>
-            <span className="text-blue-500">Snack & Spices</span>
-            <span className="text-gray-400">Fruits</span>
-            <span className="text-gray-400">Vegetables</span>
-          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {dummyProducts.map((product, idx) => (

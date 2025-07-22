@@ -48,11 +48,6 @@ export default async function Home(props: {
       <NewArrivalsSection />
       <FeaturesSection />
       <TestimonialCarousel />
-      <div className="py-12">
-        <ul className="flex flex-col gap-x-6">
-          <FeaturedProducts collections={collections} region={region} />
-        </ul>
-      </div>
     </>
   )
 }

@@ -52,23 +52,38 @@ const dummyProducts = [
 function getTimeLeft(targetDate: Date) {
   const now = new Date();
   const diff = targetDate.getTime() - now.getTime();
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((diff / (1000 * 60)) % 60);
   const seconds = Math.floor((diff / 1000) % 60);
+
   return { days, hours, minutes, seconds };
 }
 
 const DealOfTheDaySection: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft(new Date(Date.now() + 640 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000 + 31 * 60 * 1000 + 3 * 1000)));
+  const [targetDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 640);
+    date.setHours(date.getHours() + 16);
+    date.setMinutes(date.getMinutes() + 31);
+    date.setSeconds(date.getSeconds() + 3);
+    return date;
+  });
+
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(getTimeLeft(new Date(Date.now() + 640 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000 + 31 * 60 * 1000 + 3 * 1000)));
+      setTimeLeft(getTimeLeft(targetDate));
     }, 1000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [targetDate]);
 
   return (
     <section className="w-full py-12 bg-white">
@@ -96,4 +111,4 @@ const DealOfTheDaySection: React.FC = () => {
   );
 };
 
-export default DealOfTheDaySection; 
+export default DealOfTheDaySection;

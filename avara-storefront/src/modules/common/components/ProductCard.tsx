@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   badge,
 }) => {
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center min-w-[220px] max-w-xs mx-auto transition hover:shadow-lg group">
+    <div className="relative bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center w-72 mx-auto transition hover:shadow-lg group">
       {badge && (
         <div className="absolute left-2 top-6 flex flex-col items-center text-xs font-semibold text-gray-400 tracking-widest select-none" style={{letterSpacing: '0.2em'}}>
           {badge.split("").map((char, idx) => (
@@ -61,6 +61,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ))}
         </div>
       </div>
+      
       <div className="w-full text-left mt-2">
         <div className="text-xs text-gray-400 mb-1">{category}</div>
         <div className="flex items-center gap-1 mb-1">
@@ -75,16 +76,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </svg>
           ))}
         </div>
-        <div className="font-semibold text-base text-gray-800 mb-1 truncate">{name}</div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-lg font-bold text-gray-800">{price}</span>
-          {oldPrice && <span className="text-sm text-gray-400 line-through">{oldPrice}</span>}
-          {stockStatus && <span className={`text-xs font-medium ${stockStatusColor}`}>{stockStatus}</span>}
+        
+        {/* MODIFIED: Removed mb-1 from this container */}
+        <div className="w-full relative flex overflow-x-hidden">
+            <div className="flex items-center whitespace-nowrap group-hover:animate-marquee group-hover:pause">
+                <p className="font-semibold text-base text-gray-800 mr-4">{name}</p>
+                <p className="font-semibold text-base text-gray-800 mr-4" aria-hidden="true">{name}</p> 
+            </div>
+             <p className="absolute top-0 left-0 font-semibold text-base text-gray-800 truncate w-full group-hover:invisible">{name}</p>
         </div>
-        <div className="text-xs text-gray-400">{packInfo}</div>
+        
+        {/* MODIFIED: Added mt-2 here for explicit spacing */}
+        <div className="mt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-bold text-gray-800">{price}</span>
+              {oldPrice && <span className="text-sm text-gray-400 line-through">{oldPrice}</span>}
+              {stockStatus && <span className={`text-xs font-medium ${stockStatusColor}`}>{stockStatus}</span>}
+            </div>
+            <div className="text-xs text-gray-400">{packInfo}</div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default ProductCard; 
+export default ProductCard;

@@ -1,23 +1,22 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { 
-  HiOutlineUser, 
-  HiOutlineHeart, 
-  HiOutlineShoppingCart, 
-  HiOutlineLocationMarker, 
-  HiOutlineSearch, 
-  HiOutlineTag, 
-  HiOutlineViewGrid, 
+import {
+  HiOutlineUser,
+  HiOutlineHeart,
+  HiOutlineShoppingCart,
+  HiOutlineLocationMarker,
+  HiOutlineSearch,
+  HiOutlineTag,
+  HiOutlineViewGrid,
   HiOutlineChevronDown,
   HiOutlineChevronRight
 } from "react-icons/hi";
 
 // --- DATA FOR MENUS ---
 const categoriesMenu = [
-  { title: "Classic", items: ["Left Sidebar 3 Column", "Left Sidebar 4 Column", "Right Sidebar 3 Column", "Right Sidebar 4 Column", "Full Width 4 Column"] },
-  { title: "Banner", items: ["Left Sidebar 3 Column", "Left Sidebar 4 Column", "Right Sidebar 3 Column", "Right Sidebar 4 Column", "Full Width 4 Column"] },
-  { title: "Columns", items: ["3 Columns Full Width", "4 Columns Full Width", "5 Columns Full Width", "6 Columns Full Width", "Banner 3 Columns"] },
-  { title: "List", items: ["Shop Left Sidebar", "Shop Right Sidebar", "Banner Left Sidebar", "Banner Right Sidebar", "Full Width 2 Columns"] },
+  { title: "Classic", items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"] },
+  { title: "Banner", items: ["Item 6", "Item 7", "Item 8", "Item 9", "Item 10"] },
+  { title: "List", items: ["Item 11", "Item 12", "Item 13", "Item 14", "Item 15"] },
 ];
 
 const productsMenu = [
@@ -34,11 +33,11 @@ const blogMenu = ["Left Sidebar", "Right Sidebar", "Full Width", "Detail Left Si
 
 // --- REUSABLE DROPDOWN COMPONENT ---
 const SimpleDropdown = ({ items }: { items: any[] }) => (
-  <div className="w-60 bg-white rounded-xl shadow-lg border border-gray-100 p-5">
-    <ul className="space-y-4">
+  <div className="w-60 bg-white rounded-xl shadow-lg border border-gray-100 p-4">
+    <ul className="space-y-1">
       {items.map((item, index) => (
         <li key={index}>
-          <a href="#" className="flex justify-between items-center text-gray-600 hover:text-blue-500 font-medium transition-colors duration-200">
+          <a href="#" className="flex justify-between items-center text-gray-600 hover:text-blue-500 font-medium transition-all duration-200 block py-2 px-3 rounded-lg hover:bg-gray-100">
             {item.label || item}
             {item.sub && <HiOutlineChevronRight className="w-4 h-4" />}
           </a>
@@ -95,21 +94,18 @@ const Navbar = () => {
           </span>
         </div>
         <div className="flex items-center flex-1 max-w-xl mx-8">
-          <div className="relative">
-            <button className="flex items-center px-4 py-2 border rounded-l-md bg-gray-50 text-gray-700">
-              Vegetables
-              <HiOutlineChevronDown className="w-4 h-4 ml-1" />
+          <div className="relative flex items-center w-full rounded-md border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400 transition-all duration-200">
+            <input
+              type="text"
+              placeholder="I'm searching for..."
+              className="flex-1 w-full px-4 py-2.5 text-gray-700 border-none focus:outline-none focus:ring-0"
+            />
+            <button className="p-3 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 transition-colors">
+              <HiOutlineSearch className="w-5 h-5 stroke-current text-blue-400" />
             </button>
           </div>
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="flex-1 px-4 py-2 border-t border-b border-r rounded-r-md focus:outline-none"
-          />
-          <button className="-ml-8 p-2">
-            <HiOutlineSearch className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
+
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 cursor-pointer">
             <HiOutlineUser className="w-6 h-6 text-blue-400" />
@@ -149,15 +145,29 @@ const Navbar = () => {
           <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
             Categories <HiOutlineChevronDown className="w-4 h-4 ml-1" />
           </a>,
-          <div className="w-[950px] bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex gap-8">
+
+          <div className="w-[500px] bg-white rounded-2xl shadow-xl border border-gray-100 p-10 flex gap-12">
             {categoriesMenu.map((col) => (
-              <div key={col.title} className="flex-1 min-w-[200px]">
-                <div className="text-lg font-bold text-blue-600 mb-3">{col.title}</div>
-                <div className="border-b border-gray-200 mb-4" />
-                <ul className="space-y-3">
-                  {col.items.map((item, i) => (
-                    <li key={i}><a href="#" className="text-gray-600 hover:text-blue-500 font-medium transition-colors">{item}</a></li>
-                  ))}
+              <div key={col.title} className="flex-1 min-w-[120px]">
+                <div className="text-lg font-bold text-gray-900 mb-4">{col.title}</div>
+                <div className="border-b border-gray-200 mb-6" />
+                <ul className="space-y-4">
+                  {col.items.map((item, i) => {
+                    const [label, number] = item.split(' ');
+                    return (
+                      <li key={i}>
+                        <a
+                          href="#"
+                          className="block px-2 py-1 rounded-lg text-gray-700 hover:text-blue-500 hover:bg-blue-50 font-medium transition-all"
+                        >
+                          <div className="flex flex-col items-start leading-tight">
+                            <span className="text-base">{label}</span>
+                            <span className="text-base">{number}</span>
+                          </div>
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
