@@ -5,9 +5,17 @@ export async function GET(
   res: MedusaResponse
 ): Promise<void> {
   const productService = req.scope.resolve("product");
-  const products = await productService.listProducts({}, { take: 4, relations: ["variants", "images", "categories"] });
+  
+  const products = await productService.listProducts({}, { 
+    take: 100, 
+    relations: ["variants", "images", "categories"] 
+  });
 
-  const dealProducts = products.map((product: any) => ({
+  const dealProducts = products.filter((product: any) => 
+    product.metadata?.tags === "deal-of-the-day"
+  );
+
+  const dealProductsFormatted = dealProducts.map((product: any) => ({
     image: product.images?.[0]?.url || "",
     name: product.title,
     category: product.categories?.[0]?.name || "",
@@ -22,5 +30,5 @@ export async function GET(
     stockStatusColor: product.variants?.[0]?.inventory_quantity > 0 ? "text-green-500" : "text-gray-400",
   }));
 
-  res.status(200).json({ products: dealProducts });
+  res.status(200).json({ products: dealProductsFormatted });
 }
