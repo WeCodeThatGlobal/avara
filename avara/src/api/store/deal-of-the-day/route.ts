@@ -12,7 +12,7 @@ export async function GET(
   });
 
   const dealProducts = products.filter((product: any) => 
-    product.metadata?.tags === "deal-of-the-day"
+    product.metadata?.tags === "deal_of_the_day"
   );
 
   const dealProductsFormatted = dealProducts.map((product: any) => ({
