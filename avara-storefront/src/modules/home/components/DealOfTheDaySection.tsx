@@ -45,7 +45,7 @@ const DealOfTheDaySection: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getApi(ROUTES.DEAL_OF_THE_DAY)
+    getApi(ROUTES.PRODUCTS + "?type=deal_of_the_day&limit=4")
       .then((res: { ok: any; json: () => any; }) => {
         if (!res.ok) throw new Error("Failed to fetch deal of the day products");
         return res.json();

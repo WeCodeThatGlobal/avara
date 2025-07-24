@@ -8,7 +8,7 @@ const NewArrivalsSection: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    getApi(ROUTES.NEW_ARRIVALS)
+    getApi(ROUTES.PRODUCTS + "?type=new_arrivals&limit=4")
       .then((res: { ok: any; json: () => any; }) => {
         if (!res.ok) throw new Error("Failed to fetch new arrivals products");
         return res.json();
