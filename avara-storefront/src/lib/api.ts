@@ -1,8 +1,7 @@
 import { getBaseURL } from "@lib/util/env";
 
 export const ROUTES = {
-  DEAL_OF_THE_DAY: "/store/deal-of-the-day",
-  NEW_ARRIVALS: "/store/new-arrivals",
+  PRODUCTS: "/store/products-store",
 };
 
 export function getApiUrl(path: string) {
