@@ -1,5 +1,6 @@
 import { Github } from "@medusajs/icons"
 import { Button, Heading } from "@medusajs/ui"
+import Link from "next/link"
 
 const Hero = () => {
   return (
@@ -11,7 +12,11 @@ const Hero = () => {
             Explore <span className="text-blue-400">Healthy</span>
             <br />& Fresh Fruits
           </h1>
-          <button className="mt-4 px-8 py-3 border-2 border-gray-400 rounded-md text-lg font-medium hover:bg-blue-50 transition">Shop Now</button>
+          <Link href="/store">
+            <button className="mt-4 px-8 py-3 border-2 border-gray-400 rounded-md text-lg font-medium hover:bg-blue-50 transition">
+              Shop Now
+            </button>
+          </Link>
         </div>
         <div className="flex-1 flex items-center justify-center relative">
           {/* Decorative illustration from network */}
