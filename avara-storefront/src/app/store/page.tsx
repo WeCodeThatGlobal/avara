@@ -215,7 +215,6 @@ export default function StorePage() {
               "flex flex-col gap-6"
             }>
               {currentProducts.map((product) => {
-                console.log('Product:', product); // Add this to debug
                 return (
                   <Link
                     key={product.id}
