@@ -1,12 +1,19 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { BsGrid, BsListUl, BsArrowUp } from 'react-icons/bs';
+import { BsGrid, BsListUl } from 'react-icons/bs';
 import { HiOutlineChevronDown, HiOutlineChevronRight } from 'react-icons/hi';
 import ProductGridSkeletonCard from '@modules/home/components/ProductGridSkeletonCard';
 import ProductListSkeletonItem from '@modules/home/components/ProductListSkeletonItem';
 import ScrollToTopButton from '@modules/home/components/ScrollToTopButton';
+import { ROUTES, getApiUrl } from "@lib/api";
+import { getApi } from "@lib/api-client";
+import ProductCard from "@modules/common/components/ProductCard";
 
 export default function StorePage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [viewMode, setViewMode] = useState('grid');
   const [selectedColors, setSelectedColors] = useState<string[]>(['light-blue']);
   const [selectedTags, setSelectedTags] = useState<string[]>(['Clothes']);
@@ -17,7 +24,7 @@ export default function StorePage() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const totalItems = 21;
+  const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = viewMode === 'grid' ? 9 : 5;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -48,6 +55,32 @@ export default function StorePage() {
   const handleCategoryToggle = (category: string) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
   const handleWeightToggle = (weight: string) => setSelectedWeights(prev => prev.includes(weight) ? prev.filter(w => w !== weight) : [...prev, weight]);
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => setPriceRange(parseInt(e.target.value));
+
+  // Fetch products on component mount
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getApi(ROUTES.PRODUCTS)
+      .then((res: { ok: any; json: () => any; }) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data: { products: any; total: number }) => {
+        setProducts(data.products || []);
+        setLoading(false);
+        // Update total items for pagination
+        setTotalItems(data.total);
+      })
+      .catch((err: { message: any; }) => {
+        setError(err.message || "Unknown error");
+        setLoading(false);
+      });
+  }, []);
+
+  // Get current page products
+  const indexOfLastProduct = currentPage * itemsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,34 +189,59 @@ export default function StorePage() {
                 </div>
             </div>
 
-            {/* Skeletons based on view mode */}
-            {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {[...Array(itemsPerPage)].map((_, index) => <ProductGridSkeletonCard key={index} />)}
+            {/* Products Grid/List */}
+            {loading ? (
+                viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {[...Array(itemsPerPage)].map((_, index) => (
+                      <ProductGridSkeletonCard key={index} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-6">
+                    {[...Array(itemsPerPage)].map((_, index) => (
+                      <ProductListSkeletonItem key={index} />
+                    ))}
+                  </div>
+                )
+              ) : error ? (
+                <div className="text-center text-red-500 py-8">{error}</div>
+              ) : products.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No products found.</div>
+              ) : (
+                <div className={viewMode === 'grid' ? 
+                  "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : 
+                  "flex flex-col gap-6"
+                }>
+                  {currentProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      {...product}
+                      className={viewMode === 'list' ? 'flex gap-4' : ''}
+                    />
+                  ))}
                 </div>
-            ) : (
-                <div className="flex flex-col gap-6">
-                    {[...Array(itemsPerPage)].map((_, index) => <ProductListSkeletonItem key={index} />)}
-                </div>
-            )}
+              )}
 
-            {/* Pagination Controls */}
-            <div className="flex justify-between items-center mt-8">
-                <p className="text-sm text-gray-600">Showing {startItem}-{endItem} of {totalItems} item(s)</p>
-                <nav className="flex items-center gap-2">
-                    {[...Array(totalPages)].map((_, i) => {
-                        const pageNumber = i + 1;
-                        return (
-                            <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`w-10 h-10 rounded-lg text-sm font-medium transition ${currentPage === pageNumber ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
-                                {pageNumber}
-                            </button>
-                        );
-                    })}
-                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                        Next <HiOutlineChevronRight className="w-4 h-4" />
-                    </button>
-                </nav>
-            </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center mt-8">
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, totalItems)} of {totalItems} item(s)
+            </p>
+            <nav className="flex items-center gap-2">
+                {[...Array(totalPages)].map((_, i) => {
+                    const pageNumber = i + 1;
+                    return (
+                        <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={`w-10 h-10 rounded-lg text-sm font-medium transition ${currentPage === pageNumber ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                            {pageNumber}
+                        </button>
+                    );
+                })}
+                <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Next <HiOutlineChevronRight className="w-4 h-4" />
+                </button>
+            </nav>
+          </div>
         </div>
       </div>
       <ScrollToTopButton />
