@@ -38,6 +38,8 @@ export async function GET(
       const price = variant?.prices?.[0];
 
       return {
+        id: product.id,
+        description: product.description,
         image: product.images?.[0]?.url || "",
         name: product.title,
         category: product.categories?.[0]?.name || "",
