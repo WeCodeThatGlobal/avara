@@ -22,3 +22,21 @@ export type StoreFreeShippingPrice = StorePrice & {
   target_remaining: number
   remaining_percentage: number
 }
+
+// Cart types
+export interface CartItem {
+  id: string
+  name: string
+  image: string
+  price: number
+  originalPrice?: number
+  quantity: number
+  category: string
+  packInfo: string
+}
+
+export interface CartState {
+  items: CartItem[]
+  totalItems: number
+  totalPrice: number
+}
