@@ -223,6 +223,7 @@ export default function StorePage() {
                   >
                     <ProductCard
                       key={product.id}
+                      id={product.id}
                       {...product}
                       className={viewMode === 'list' ? 'flex gap-4' : ''}
                     />
