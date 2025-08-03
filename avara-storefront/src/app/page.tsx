@@ -6,7 +6,6 @@ import TestimonialCarousel from "@modules/home/components/TestimonialCarousel"
 import FeaturesSection from "@modules/home/components/FeaturesSection"
 import DealOfTheDaySection from "@modules/home/components/DealOfTheDaySection"
 import NewArrivalsSection from "@modules/home/components/NewArrivalsSection"
-import { listCollections } from "@lib/data/collections"
 import FeatureCard from "@modules/common/components/FeatureCard"
 
 export const metadata: Metadata = {
@@ -16,13 +15,6 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
-  const { collections } = await listCollections({
-    fields: "id, handle, title",
-  })
-
-  if (!collections) {
-    return null
-  }
 
   return (
     <>
