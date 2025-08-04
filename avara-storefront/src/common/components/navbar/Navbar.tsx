@@ -107,15 +107,10 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2 cursor-pointer">
+          <div className="flex items-center gap-1 cursor-pointer">
             <HiOutlineUser className="w-6 h-6 text-blue-400" />
             <span className="text-gray-700">Account</span>
             <span className="font-semibold text-gray-900 ml-1">Login</span>
-          </div>
-          <div className="flex items-center gap-1 cursor-pointer">
-            <HiOutlineHeart className="w-6 h-6 text-blue-400" />
-            <span className="text-xs text-gray-500">3 Items</span>
-            <span className="font-semibold text-gray-900 ml-1">Wishlist</span>
           </div>
           <div className="flex items-center gap-1 cursor-pointer">
             <HiOutlineShoppingCart className="w-6 h-6 text-blue-400" />
