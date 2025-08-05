@@ -49,7 +49,7 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
 
     const result = await response.json();
     
-    if (result.success && result.data?.token) {
+    if (result.success && result.data?.token && typeof window !== 'undefined') {
       localStorage.setItem('auth_token', result.data.token);
       localStorage.setItem('user_data', JSON.stringify(result.data.customer));
     }
