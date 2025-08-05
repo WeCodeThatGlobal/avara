@@ -11,6 +11,8 @@ import {
   HiOutlineChevronDown,
   HiOutlineChevronRight
 } from "react-icons/hi";
+import { useCart } from "../../../lib/context/CartContext";
+import Link from "next/link";
 
 // --- DATA FOR MENUS ---
 const categoriesMenu = [
@@ -37,7 +39,7 @@ const SimpleDropdown = ({ items }: { items: any[] }) => (
     <ul className="space-y-1">
       {items.map((item, index) => (
         <li key={index}>
-          <a href="#" className="flex justify-between items-center text-gray-600 hover:text-blue-500 font-medium transition-all duration-200 block py-2 px-3 rounded-lg hover:bg-gray-100">
+          <a href="#" className="justify-between items-center text-gray-600 hover:text-blue-500 font-medium transition-all duration-200 block py-2 px-3 rounded-lg hover:bg-gray-100">
             {item.label || item}
             {item.sub && <HiOutlineChevronRight className="w-4 h-4" />}
           </a>
@@ -52,6 +54,7 @@ const SimpleDropdown = ({ items }: { items: any[] }) => (
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const { state: cartState } = useCart();
 
   const handleMouseEnter = (menuName: string) => {
     if (closeTimeout.current) {
@@ -101,7 +104,7 @@ const Navbar = () => {
               className="flex-1 w-full px-4 py-2.5 text-gray-700 border-none focus:outline-none focus:ring-0"
             />
             <button className="p-3 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 transition-colors">
-              <HiOutlineSearch className="w-5 h-5 stroke-current text-blue-400" />
+              <HiOutlineSearch className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -116,7 +119,12 @@ const Navbar = () => {
             <HiOutlineShoppingCart className="w-6 h-6 text-blue-400" />
             <span className="text-xs text-gray-500">4 Items</span>
             <span className="font-semibold text-gray-900 ml-1">Cart</span>
-          </div>
+            {cartState.totalItems > 0 && (
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                {cartState.totalItems}
+              </div>
+            )}
+          </Link>
         </div>
         <div className="ml-8">
           <button className="flex items-center px-4 py-2 border rounded-md bg-gray-50 text-gray-700">
@@ -128,16 +136,20 @@ const Navbar = () => {
       </div>
 
       {/* Bottom section: Navigation links and dropdowns */}
-      <div className="flex items-center gap-10 px-8 py-3 border-t bg-white">
+      {/* CHANGED: gap-10 to gap-4 for slightly less space between items */}
+      <div className="flex items-center gap-4 px-8 py-3 border-t bg-white">
         <button className="p-2 rounded hover:bg-gray-100">
-          <HiOutlineViewGrid className="w-6 h-6 text-blue-400" />
+          <HiOutlineViewGrid className="w-6 h-6 text-gray-500" />
         </button>
-        <a href="#" className="font-medium text-gray-700 hover:text-blue-500">Home</a>
+        
+        {/* ADDED: padding, rounded corners, and transition for a better hover effect */}
+        <a href="#" className="font-medium text-gray-700 hover:text-blue-500 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">Home</a>
         
         {/* Categories Dropdown */}
         {renderDropdown(
           'categories',
-          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
+          // ADDED: padding, rounded corners, and transition for a better hover effect
+          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
             Categories <HiOutlineChevronDown className="w-4 h-4 ml-1" />
           </a>,
 
@@ -172,7 +184,8 @@ const Navbar = () => {
         {/* Products Dropdown */}
         {renderDropdown(
           'products',
-          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
+          // ADDED: padding, rounded corners, and transition for a better hover effect
+          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
             Products <HiOutlineChevronDown className="w-4 h-4 ml-1" />
           </a>,
           <SimpleDropdown items={productsMenu} />
@@ -181,7 +194,8 @@ const Navbar = () => {
         {/* Pages Dropdown */}
         {renderDropdown(
           'pages',
-          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
+          // ADDED: padding, rounded corners, and transition for a better hover effect
+          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
             Pages <HiOutlineChevronDown className="w-4 h-4 ml-1" />
           </a>,
           <SimpleDropdown items={pagesMenu} />
@@ -190,14 +204,16 @@ const Navbar = () => {
         {/* Blog Dropdown */}
         {renderDropdown(
           'blog',
-          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
+          // ADDED: padding, rounded corners, and transition for a better hover effect
+          <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
             Blog <HiOutlineChevronDown className="w-4 h-4 ml-1" />
           </a>,
           <SimpleDropdown items={blogMenu} />
         )}
 
-        <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center">
-          <HiOutlineTag className="w-5 h-5 mr-1 text-blue-400" />Offers
+        {/* ADDED: padding, rounded corners, and transition for a better hover effect */}
+        <a href="#" className="font-medium text-gray-700 hover:text-blue-500 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
+          <HiOutlineTag className="w-5 h-5 mr-1.5 text-gray-500" />Offers
         </a>
       </div>
     </nav>

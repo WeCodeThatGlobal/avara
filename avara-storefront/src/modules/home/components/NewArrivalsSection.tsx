@@ -34,7 +34,7 @@ const NewArrivalsSection: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((product, idx) => (
-            <ProductCard key={idx} {...product} />
+            <ProductCard key={product.id || idx} id={product.id || `new-${idx}`} {...product} />
           ))}
         </div>
       </div>

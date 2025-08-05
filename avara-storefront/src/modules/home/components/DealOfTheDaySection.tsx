@@ -83,7 +83,7 @@ const DealOfTheDaySection: React.FC = () => {
             <div className="col-span-4 text-center text-gray-400">No deals available.</div>
           )}
           {!loading && !error && products.map((product, idx) => (
-            <ProductCard key={idx} {...product} />
+            <ProductCard key={product.id || idx} id={product.id || `deal-${idx}`} {...product} />
           ))}
         </div>
       </div>

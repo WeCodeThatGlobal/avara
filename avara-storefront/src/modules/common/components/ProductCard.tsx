@@ -1,7 +1,11 @@
+"use client";
 import React from "react";
 import { HiOutlineHeart, HiOutlineEye, HiOutlineArrowsRightLeft, HiOutlineShoppingBag } from "react-icons/hi2";
+import { useCart } from "../../../lib/context/CartContext";
+import { CartItem } from "../../../types/global";
 
 interface ProductCardProps {
+  id: string;
   image: string;
   name: string;
   category: string;
@@ -23,6 +27,7 @@ const icons = [
 ];
 
 const ProductCard: React.FC<ProductCardProps> = ({
+  id,
   image,
   name,
   category,
@@ -36,7 +41,34 @@ const ProductCard: React.FC<ProductCardProps> = ({
   className = "",
   description,
 }) => {
+  const { addItem } = useCart();
   const isListView = className.includes("flex");
+
+  // Extract numeric price from string (assuming format like "$19.99")
+  const extractPrice = (priceStr: string): number => {
+    const numericPrice = priceStr.replace(/[^0-9.]/g, '');
+    return parseFloat(numericPrice) || 0;
+  };
+
+  const extractOriginalPrice = (priceStr?: string): number | undefined => {
+    if (!priceStr) return undefined;
+    const numericPrice = priceStr.replace(/[^0-9.]/g, '');
+    return parseFloat(numericPrice) || undefined;
+  };
+
+  const handleAddToCart = () => {
+    const cartItem: Omit<CartItem, 'quantity'> = {
+      id,
+      name,
+      image,
+      price: extractPrice(price),
+      originalPrice: extractOriginalPrice(oldPrice),
+      category,
+      packInfo,
+    };
+    
+    addItem(cartItem);
+  };
 
   return (
     <div className={`relative bg-white rounded-2xl border border-gray-200 shadow-sm transition hover:shadow-lg group
@@ -72,7 +104,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
               key={idx}
               className="bg-white border border-gray-200 rounded-xl p-2 shadow hover:bg-gray-100 focus:outline-none"
               tabIndex={-1}
-              aria-label="Product action"
+              aria-label={idx === 3 ? "Add to cart" : "Product action"}
+              onClick={idx === 3 ? handleAddToCart : undefined}
             >
               {icon}
             </button>
