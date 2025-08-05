@@ -71,7 +71,7 @@ export async function updateUserProfile(
     
     return {
       success: true,
-      data: data.data.customer,
+data: data.data?.customer,
     };
   } catch (error) {
     console.error('Update user profile error:', error);
