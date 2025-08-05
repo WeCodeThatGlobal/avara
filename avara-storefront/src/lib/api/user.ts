@@ -37,7 +37,7 @@ export async function getCurrentUser(): Promise<{
     
     return {
       success: true,
-      data: data.data.customer,
+data: data.data?.customer,
     };
   } catch (error) {
     console.error('Get current user error:', error);
