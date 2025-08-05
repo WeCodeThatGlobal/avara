@@ -1,16 +1,20 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     HiOutlineEye,
     HiOutlineEyeSlash,
     HiOutlineEnvelope,
     HiOutlineLockClosed,
     HiOutlineUser,
-    HiOutlineCheckCircle
+    HiOutlineArrowLeft
 } from 'react-icons/hi2';
+import { useAuth } from '../../lib/context/AuthContext';
 
 const RegisterPage = () => {
+    const router = useRouter();
+    const { register, state: authState } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -23,9 +27,9 @@ const RegisterPage = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        general: ''
     });
-    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -37,19 +41,20 @@ const RegisterPage = () => {
         if (errors[name as keyof typeof errors]) {
             setErrors(prev => ({
                 ...prev,
-                [name]: ''
+                [name]: '',
+                general: ''
             }));
         }
     };
 
     const validateForm = () => {
-        const newErrors = { name: '', email: '', password: '', confirmPassword: '' };
+        const newErrors = { name: '', email: '', password: '', confirmPassword: '', general: '' };
         let isValid = true;
 
-        if (!formData.name.trim()) {
-            newErrors.name = 'Full name is required';
+        if (!formData.name) {
+            newErrors.name = 'Name is required';
             isValid = false;
-        } else if (formData.name.trim().length < 2) {
+        } else if (formData.name.length < 2) {
             newErrors.name = 'Name must be at least 2 characters';
             isValid = false;
         }
@@ -81,42 +86,64 @@ const RegisterPage = () => {
             isValid = false;
         }
 
-        if (!agreedToTerms) {
-            alert('Please agree to the Terms of Service and Privacy Policy');
-            isValid = false;
-        }
-
         setErrors(newErrors);
         return isValid;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateForm()) {
-            // Since there's no backend, just show a success message
-            alert('Registration successful! (This is just a demo - no backend integration)');
-            console.log('Registration attempt:', formData);
+        
+        if (!validateForm()) {
+            return;
+        }
+
+        setErrors({ name: '', email: '', password: '', confirmPassword: '', general: '' });
+
+        try {
+            const result = await register({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
+            });
+
+            if (result.success) {
+                // Redirect to home page on successful registration
+                router.push('/');
+            } else {
+                // Handle validation errors from backend
+                if (result.errors && result.errors.length > 0) {
+                    const newErrors = { name: '', email: '', password: '', confirmPassword: '', general: '' };
+                    result.errors.forEach((error: any) => {
+                        if (error.field === 'name') {
+                            newErrors.name = error.message;
+                        } else if (error.field === 'email') {
+                            newErrors.email = error.message;
+                        } else if (error.field === 'password') {
+                            newErrors.password = error.message;
+                        }
+                    });
+                    setErrors(newErrors);
+                } else {
+                    // General error message
+                    setErrors(prev => ({
+                        ...prev,
+                        general: result.message || 'Registration failed. Please try again.'
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            setErrors(prev => ({
+                ...prev,
+                general: 'Network error. Please check your connection and try again.'
+            }));
         }
     };
 
-    const getPasswordStrength = (password: string) => {
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (/[a-z]/.test(password)) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/\d/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-        return strength;
-    };
-
-    const passwordStrength = getPasswordStrength(formData.password);
-    const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-    const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
-
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center px-4 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
-                {/* Registration Card */}
+                {/* Register Card */}
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
                     {/* Header */}
                     <div className="text-center mb-8">
@@ -124,7 +151,14 @@ const RegisterPage = () => {
                         <p className="text-gray-600">Join Avara and start shopping</p>
                     </div>
 
-                    {/* Registration Form */}
+                    {/* General Error Message */}
+                    {errors.general && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600">{errors.general}</p>
+                        </div>
+                    )}
+
+                    {/* Register Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Name Field */}
                         <div>
@@ -141,7 +175,8 @@ const RegisterPage = () => {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                                    disabled={authState.isLoading}
+                                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed ${
                                         errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
                                     }`}
                                     placeholder="Enter your full name"
@@ -167,7 +202,8 @@ const RegisterPage = () => {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                                    disabled={authState.isLoading}
+                                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed ${
                                         errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
                                     }`}
                                     placeholder="Enter your email"
@@ -193,15 +229,17 @@ const RegisterPage = () => {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                                    disabled={authState.isLoading}
+                                    className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed ${
                                         errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
                                     }`}
-                                    placeholder="Create a strong password"
+                                    placeholder="Enter your password"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    disabled={authState.isLoading}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center disabled:cursor-not-allowed"
                                 >
                                     {showPassword ? (
                                         <HiOutlineEyeSlash className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -210,25 +248,6 @@ const RegisterPage = () => {
                                     )}
                                 </button>
                             </div>
-                            
-                            {/* Password Strength Indicator */}
-                            {formData.password && (
-                                <div className="mt-2">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs text-gray-600">Password strength:</span>
-                                        <span className={`text-xs font-medium ${passwordStrength >= 3 ? 'text-green-600' : passwordStrength >= 2 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                            {strengthLabels[passwordStrength - 1] || 'Very Weak'}
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div 
-                                            className={`h-2 rounded-full transition-all duration-300 ${strengthColors[passwordStrength - 1] || 'bg-red-500'}`}
-                                            style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )}
-                            
                             {errors.password && (
                                 <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                             )}
@@ -249,7 +268,8 @@ const RegisterPage = () => {
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                                    disabled={authState.isLoading}
+                                    className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed ${
                                         errors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'
                                     }`}
                                     placeholder="Confirm your password"
@@ -257,7 +277,8 @@ const RegisterPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    disabled={authState.isLoading}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center disabled:cursor-not-allowed"
                                 >
                                     {showConfirmPassword ? (
                                         <HiOutlineEyeSlash className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -266,12 +287,6 @@ const RegisterPage = () => {
                                     )}
                                 </button>
                             </div>
-                            {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                                <div className="mt-2 flex items-center text-green-600">
-                                    <HiOutlineCheckCircle className="w-4 h-4 mr-1" />
-                                    <span className="text-sm">Passwords match</span>
-                                </div>
-                            )}
                             {errors.confirmPassword && (
                                 <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>
                             )}
@@ -280,9 +295,17 @@ const RegisterPage = () => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02]"
+                            disabled={authState.isLoading}
+                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] disabled:bg-blue-400 disabled:cursor-not-allowed disabled:transform-none"
                         >
-                            Create Account
+                            {authState.isLoading ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                    Creating Account...
+                                </div>
+                            ) : (
+                                'Create Account'
+                            )}
                         </button>
                     </form>
 
