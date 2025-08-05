@@ -53,7 +53,8 @@ export async function POST(
     const customer = await customerService.createCustomers({
       email,
       first_name: name.split(' ')[0] || name,
-      last_name: name.split(' ').slice(1).join(' ') || ''
+      last_name: name.split(' ').slice(1).join(' ') || '',
+      password: password
     });
 
     const token = generateToken({
