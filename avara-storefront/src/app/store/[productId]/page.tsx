@@ -4,6 +4,8 @@ import { getApi } from "@lib/api-client";
 import { ROUTES } from "@lib/api";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCart } from "../../../lib/context/CartContext";
+import { CartItem } from "../../../types/global";
 
 interface ProductPageProps {
   params: {
@@ -67,6 +69,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>('detail');
   const [mainImage, setMainImage] = useState('');
   const router = useRouter();
+  const { addItem } = useCart();
 
   useEffect(() => {
     setLoading(true);
@@ -87,6 +90,22 @@ export default function ProductPage({ params }: ProductPageProps) {
         setLoading(false);
       });
   }, [params.productId]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    const cartItem: Omit<CartItem, 'quantity'> = {
+      id: product.id,
+      name: product.title,
+      image: product.image,
+      price: parseFloat(product.price) || 0,
+      originalPrice: product.original_price ? parseFloat(product.original_price) : undefined,
+      category: product.category || 'General',
+      packInfo: selectedWeight,
+    };
+    
+    addItem(cartItem);
+  };
 
   if (loading) return <div className="min-h-[70vh] flex items-center justify-center">Loading...</div>;
   if (error) return <div className="min-h-[70vh] flex items-center justify-center text-red-500">{error}</div>;
@@ -211,8 +230,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <span className="w-10 text-center text-lg font-medium">{quantity}</span>
                 <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-r-lg transition-colors">+</button>
             </div>
-            <button className="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-              View Cart
+            <button 
+              onClick={handleAddToCart}
+              className="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            >
+              Add to Cart
             </button>
             <button className="p-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
               <HeartIcon />
