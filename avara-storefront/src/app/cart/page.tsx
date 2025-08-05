@@ -168,7 +168,7 @@ const CartPage = () => {
               </div>
               
               <button className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 transition-colors mb-4">
-                Proceed to Checkout
+                <Link href="/checkout">Proceed to Checkout</Link>
               </button>
               
               <Link
