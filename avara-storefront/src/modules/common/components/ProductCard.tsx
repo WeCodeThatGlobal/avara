@@ -21,7 +21,6 @@ interface ProductCardProps {
 }
 
 const icons = [
-  <HiOutlineHeart key="heart" className="w-6 h-6" />,
   <HiOutlineEye key="eye" className="w-6 h-6" />,
   <HiOutlineArrowsRightLeft key="compare" className="w-6 h-6" />,
   <HiOutlineShoppingBag key="cart" className="w-6 h-6" />,
