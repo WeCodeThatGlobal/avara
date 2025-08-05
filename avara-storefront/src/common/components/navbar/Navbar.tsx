@@ -9,9 +9,13 @@ import {
   HiOutlineTag,
   HiOutlineViewGrid,
   HiOutlineChevronDown,
-  HiOutlineChevronRight
+  HiOutlineChevronRight,
+  HiOutlineLogout,
+  HiOutlineCog,
+  HiOutlineDocumentText
 } from "react-icons/hi";
 import { useCart } from "../../../lib/context/CartContext";
+import { useAuth } from "../../../lib/context/AuthContext";
 import Link from "next/link";
 
 // --- DATA FOR MENUS ---
@@ -55,6 +59,7 @@ const Navbar = () => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const { state: cartState } = useCart();
+  const { state: authState, logout } = useAuth();
 
   const handleMouseEnter = (menuName: string) => {
     if (closeTimeout.current) {
@@ -110,11 +115,64 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-8">
-          <Link href="/login" className="flex items-center gap-1 cursor-pointer">
-            <HiOutlineUser className="w-6 h-6 text-blue-400" />
-            <span className="text-gray-700">Account</span>
-            <span className="font-semibold text-gray-900 ml-1">Login</span>
-          </Link>
+          {authState.isAuthenticated ? (
+            // User is logged in - show user menu
+            renderDropdown(
+              'user',
+              <div className="flex items-center gap-1 cursor-pointer">
+                <HiOutlineUser className="w-6 h-6 text-blue-400" />
+                <span className="text-gray-700">Account</span>
+                <span className="font-semibold text-gray-900 ml-1">
+                  {authState.user?.first_name || 'User'}
+                </span>
+                <HiOutlineChevronDown className="w-4 h-4 ml-1" />
+              </div>,
+              <div className="w-48 bg-white rounded-xl shadow-lg border border-gray-100 p-2">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <div className="text-sm font-medium text-gray-900">
+                    {authState.user?.first_name} {authState.user?.last_name}
+                  </div>
+                  <div className="text-xs text-gray-500">{authState.user?.email}</div>
+                </div>
+                <ul className="py-1">
+                  <li>
+                    <Link href="/account" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-500 hover:bg-gray-100 rounded-md transition-colors">
+                      <HiOutlineUser className="w-4 h-4 mr-2" />
+                      Profile
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/orders" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-500 hover:bg-gray-100 rounded-md transition-colors">
+                      <HiOutlineDocumentText className="w-4 h-4 mr-2" />
+                      Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/settings" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-500 hover:bg-gray-100 rounded-md transition-colors">
+                      <HiOutlineCog className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                  </li>
+                  <li className="border-t border-gray-100 mt-1 pt-1">
+                    <button
+                      onClick={logout}
+                      className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                      <HiOutlineLogout className="w-4 h-4 mr-2" />
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )
+          ) : (
+            // User is not logged in, show login link
+            <Link href="/login" className="flex items-center gap-1 cursor-pointer">
+              <HiOutlineUser className="w-6 h-6 text-blue-400" />
+              <span className="text-gray-700">Account</span>
+              <span className="font-semibold text-gray-900 ml-1">Login</span>
+            </Link>
+          )}
           <Link href="/cart" className="flex items-center gap-1 cursor-pointer">
             <HiOutlineShoppingCart className="w-6 h-6 text-blue-400" />
             <span className="font-semibold text-gray-900">
@@ -137,10 +195,10 @@ const Navbar = () => {
         <button className="p-2 rounded hover:bg-gray-100">
           <HiOutlineViewGrid className="w-6 h-6 text-gray-500" />
         </button>
-        
+
         {/* ADDED: padding, rounded corners, and transition for a better hover effect */}
         <a href="#" className="font-medium text-gray-700 hover:text-blue-500 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">Home</a>
-        
+
         {/* Categories Dropdown */}
         {renderDropdown(
           'categories',
@@ -186,7 +244,7 @@ const Navbar = () => {
           </a>,
           <SimpleDropdown items={productsMenu} />
         )}
-        
+
         {/* Pages Dropdown */}
         {renderDropdown(
           'pages',
