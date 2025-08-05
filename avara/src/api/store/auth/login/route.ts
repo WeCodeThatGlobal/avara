@@ -47,14 +47,6 @@ export async function POST(
         });
       }
 
-      // For now, we'll skip password verification since registration doesn't set passwords
-      // In a production environment, you would need to implement proper password hashing
-      // and verification during registration and login
-      
-      // Since we're not setting passwords during registration, we'll just verify the email exists
-      // This is NOT secure for production - you should implement proper password verification
-
-      // Generate JWT token using our utility
       const token = generateToken({
         customer_id: customer.id,
         email: customer.email
