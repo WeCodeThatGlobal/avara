@@ -22,7 +22,7 @@ export default async function resetPasswordTokenHandler({
     const backendUrl = config.admin.backendUrl !== "/" ? config.admin.backendUrl :
       "http://localhost:9000"
     const adminPath = config.admin.path
-    urlPrefix = `${backendUrl}${adminPath}`
+    urlPrefix = `${backendUrl.replace(/\/$/, '')}${adminPath}`
   }
 
   await notificationModuleService.createNotifications({
