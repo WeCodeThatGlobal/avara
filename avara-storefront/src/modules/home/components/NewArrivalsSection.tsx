@@ -3,10 +3,11 @@ import React, { useEffect, useState } from "react";
 import ProductCard from "@modules/common/components/ProductCard";
 import { ROUTES, getApiUrl } from "@lib/api";
 import { getApi } from "@lib/api-client";
+import Placeholder from "../../../common/components/placeholders/ProductsNotAvailable";
 
 const NewArrivalsSection: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     getApi(ROUTES.PRODUCTS + "?type=new_arrivals&limit=4")
       .then((res: { ok: any; json: () => any; }) => {
@@ -15,9 +16,11 @@ const NewArrivalsSection: React.FC = () => {
       })
       .then((data: { products: any; }) => {
         setProducts(data.products || []);
+        setLoading(false);
       })
       .catch((err: { message: any; }) => {
         console.error(err);
+        setLoading(false);
       });
   }, []);
 
@@ -33,6 +36,10 @@ const NewArrivalsSection: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          {loading && <Placeholder text="Loading new arrivals..." />}
+          {!loading && products.length === 0 && (
+            <Placeholder text="No new arrivals available." />
+          )}
           {products.map((product, idx) => (
             <ProductCard key={product.id || idx} id={product.id || `new-${idx}`} {...product} />
           ))}
