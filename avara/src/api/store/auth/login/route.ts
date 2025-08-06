@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
-import { generateToken } from "../../../../lib/jwt";
+import Medusa from "@medusajs/js-sdk";
+
 
 // Validation schema for login
 const loginSchema = z.object({
@@ -29,11 +30,31 @@ export async function POST(
 
     const { email, password } = validationResult.data;
 
-    // Get the customer service
-    const customerService = req.scope.resolve("customer");
-    
     try {
-      // Retrieve customer by email
+      const sdk = new Medusa({
+        baseUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+        auth: {
+          type: "jwt"
+        }
+      });
+
+      // Use Medusa's built-in authentication
+      const authResult = await sdk.auth.login("customer", "emailpass", {
+        email,
+        password
+      });
+
+      const token = typeof authResult === 'string' ? authResult : (authResult as any).location;
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication failed"
+        });
+      }
+
+      // Get customer details
+      const customerService = req.scope.resolve("customer");
       const customers = await customerService.listCustomers({
         email: email
       });
@@ -46,11 +67,6 @@ export async function POST(
           message: "Invalid email or password"
         });
       }
-
-      const token = generateToken({
-        customer_id: customer.id,
-        email: customer.email
-      });
 
       // Update last login timestamp
       await customerService.updateCustomers(customer.id, {
@@ -75,7 +91,8 @@ export async function POST(
       });
 
     } catch (error) {
-      // Customer not found or other error
+      console.error("Authentication error:", error);
+
       return res.status(401).json({
         success: false,
         message: "Invalid email or password"

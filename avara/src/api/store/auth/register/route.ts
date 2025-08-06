@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
-import { generateToken } from "../../../../lib/jwt";
+import Medusa from "@medusajs/js-sdk";
+
 
 // Validation schema for registration
 const registerSchema = z.object({
@@ -31,62 +32,93 @@ export async function POST(
 
     const { name, email, password } = validationResult.data;
 
-    const customerService = req.scope.resolve("customer");
-    
+    const sdk = new Medusa({
+      baseUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+      auth: {
+        type: "jwt"
+      }
+    });
+
     try {
-      // Check if customer already exists
-      const existingCustomers = await customerService.listCustomers({
-        email: email
+      // First, try to authenticate the user  - n(in case they already exist)
+      try {
+        const loginResult = await sdk.auth.login("customer", "emailpass", {
+          email,
+          password
+        });
+
+        // If login succeeds, user already exists and tehn authenticate
+        const token = typeof loginResult === 'string' ? loginResult : (loginResult as any).location;
+
+        return res.status(200).json({
+          success: true,
+          message: "User already exists and can be authenticated",
+          data: {
+            customer: {
+              email: email
+            },
+            token: token
+          }
+        });
+      } catch (loginError) {
+        console.log("User doesn't exist, proceeding with registration");
+      }
+
+      const registerResult = await sdk.auth.register("customer", "emailpass", {
+        email,
+        password
       });
-      
-      if (existingCustomers.length > 0) {
+
+      const registerToken = typeof registerResult === 'string' ? registerResult : (registerResult as any).location;
+
+      if (!registerToken) {
+        return res.status(400).json({
+          success: false,
+          message: "Failed to get registration token"
+        });
+      }
+
+      // Create customer
+      const customerService = req.scope.resolve("customer");
+      const customer = await customerService.createCustomers({
+        email,
+        first_name: name.split(' ')[0] || name,
+        last_name: name.split(' ').slice(1).join(' ') || ''
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Registration successful",
+        data: {
+          customer: {
+            id: customer.id,
+            email: customer.email,
+            first_name: customer.first_name,
+            last_name: customer.last_name,
+            created_at: customer.created_at
+          },
+          token: registerToken
+        }
+      });
+
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      if (error.status === 409) {
         return res.status(409).json({
           success: false,
           message: "A user with this email already exists"
         });
       }
-    } catch (error) {
-        // Customer doesn't exist, which is what we want for registration
+
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error during registration"
+      });
     }
-
-    // Create new customer
-    const customer = await customerService.createCustomers({
-      email,
-      first_name: name.split(' ')[0] || name,
-      last_name: name.split(' ').slice(1).join(' ') || '',
-      password: password
-    });
-
-    const token = generateToken({
-      customer_id: customer.id,
-      email: customer.email
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Registration successful",
-      data: {
-        customer: {
-          id: customer.id,
-          email: customer.email,
-          first_name: customer.first_name,
-          last_name: customer.last_name,
-          created_at: customer.created_at
-        },
-        token: token
-      }
-    });
 
   } catch (error) {
     console.error("Registration error:", error);
-    
-    // Handle specific Medusa errors
-    if (error.type === "duplicate_error") {
-      return res.status(409).json({
-        success: false,
-        message: "A user with this email already exists"
-      });
-    }
 
     return res.status(500).json({
       success: false,
