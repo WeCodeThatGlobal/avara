@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import Medusa from "@medusajs/js-sdk";
 
+
 // Validation schema for login
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -91,6 +92,7 @@ export async function POST(
 
     } catch (error) {
       console.error("Authentication error:", error);
+
       return res.status(401).json({
         success: false,
         message: "Invalid email or password"

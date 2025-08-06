@@ -27,6 +27,7 @@ export async function POST(
 
     // For JWT tokens, the client should discard the token
     // We don't need to clear any server-side session
+
     return res.status(200).json({
       success: true,
       message: "Logout successful"

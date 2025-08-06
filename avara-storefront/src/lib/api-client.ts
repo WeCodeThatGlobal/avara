@@ -4,6 +4,15 @@ const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
 export interface FetchApiOptions extends RequestInit {
   headers?: Record<string, string>;
+  requireAuth?: boolean;
+}
+
+/**
+ * Get the stored auth token
+ */
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
 }
 
 /**
@@ -25,6 +34,14 @@ async function fetchApi(
 
   if (PUBLISHABLE_KEY) {
     headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  }
+
+  // Add auth token if required
+  if (options.requireAuth) {
+    const token = getAuthToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
   }
 
   return fetch(url, {
@@ -128,4 +145,110 @@ export async function getApi(
         ...options,
         method: "GET",
     });
+}
+
+/**
+ * Performs an authenticated POST request.
+ * Automatically includes the JWT token in the Authorization header.
+ * @param path - The API endpoint path.
+ * @param body - The request payload. Will be JSON stringified.
+ * @param options - Optional fetch options to override defaults.
+ */
+export async function postApiAuth(
+  path: string,
+  body: any,
+  options: FetchApiOptions = {}
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  if (PUBLISHABLE_KEY) {
+    headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  }
+
+  return postApi(path, body, { 
+    ...options, 
+    requireAuth: true,
+    headers
+  });
+}
+
+/**
+ * Performs an authenticated PUT request.
+ * Automatically includes the JWT token in the Authorization header.
+ * @param path - The API endpoint path.
+ * @param body - The request payload. Will be JSON stringified.
+ * @param options - Optional fetch options to override defaults.
+ */
+export async function putApiAuth(
+  path: string,
+  body: any,
+  options: FetchApiOptions = {}
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  if (PUBLISHABLE_KEY) {
+    headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  }
+
+  return putApi(path, body, { 
+    ...options, 
+    requireAuth: true,
+    headers
+  });
+}
+
+/**
+ * Performs an authenticated GET request.
+ * Automatically includes the JWT token in the Authorization header.
+ * @param path - The API endpoint path.
+ * @param options - Optional fetch options to override defaults.
+ */
+export async function getApiAuth(
+  path: string,
+  options: FetchApiOptions = {}
+) {
+  const headers: Record<string, string> = {
+    ...options.headers,
+  };
+
+  if (PUBLISHABLE_KEY) {
+    headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  }
+
+  return getApi(path, { 
+    ...options, 
+    requireAuth: true,
+    headers
+  });
+}
+
+/**
+ * Performs an authenticated DELETE request.
+ * Automatically includes the JWT token in the Authorization header.
+ * @param path - The API endpoint path.
+ * @param options - Optional fetch options to override defaults.
+ */
+export async function deleteApiAuth(
+  path: string,
+  options: FetchApiOptions = {}
+) {
+  const headers: Record<string, string> = {
+    ...options.headers,
+  };
+
+  if (PUBLISHABLE_KEY) {
+    headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  }
+
+  return deleteApi(path, { 
+    ...options, 
+    requireAuth: true,
+    headers
+  });
 }

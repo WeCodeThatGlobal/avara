@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import Medusa from "@medusajs/js-sdk";
 
+
 // Validation schema for registration
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
@@ -17,7 +18,7 @@ export async function POST(
 ) {
   try {
     const validationResult = registerSchema.safeParse(req.body);
-
+    
     if (!validationResult.success) {
       return res.status(400).json({
         success: false,
