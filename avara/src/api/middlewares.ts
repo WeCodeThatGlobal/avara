@@ -25,8 +25,9 @@ async function authenticateCustomer(
   next: MedusaNextFunction
 ) {
   try {
+
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -35,7 +36,7 @@ async function authenticateCustomer(
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -46,20 +47,74 @@ async function authenticateCustomer(
     try {
       // Verify JWT token using Medusa's JWT secret
       const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+
       const decoded = jwt.verify(token, JWT_SECRET) as any;
-      
-      if (!decoded || !decoded.customer_id) {
+
+      // Medusa JWT tokens use auth_identity_id instead of customer_id
+      if (!decoded || !decoded.auth_identity_id) {
+        console.log("Invalid or expired token - no auth_identity_id");
         return res.status(401).json({
           success: false,
           message: "Invalid or expired token"
         });
       }
 
-      // Verify customer exists
       const customerService = req.scope.resolve("customer");
-      const customer = await customerService.retrieveCustomer(decoded.customer_id);
-      
+      console.log("Customer service resolved");
+
+      let customer: any = null;
+
+      if (decoded.actor_id && decoded.actor_id.trim() !== '') {
+        console.log("Trying to get customer by actor_id:", decoded.actor_id);
+        try {
+          customer = await customerService.retrieveCustomer(decoded.actor_id);
+          console.log("Customer found by actor_id:", customer ? "Yes" : "No");
+        } catch (error) {
+          console.log("Error getting customer by actor_id:", error);
+        }
+      }
+
       if (!customer) {
+        console.log("Trying to get customer from auth identity");
+        const authService = req.scope.resolve("auth");
+
+        try {
+          const authIdentity = await authService.retrieveAuthIdentity(decoded.auth_identity_id);
+          console.log("Auth identity retrieved:", authIdentity);
+
+          if (authIdentity) {
+            if (authIdentity.app_metadata) {
+              const metadata = authIdentity.app_metadata as any;
+              if (metadata.email) {
+                const customers = await customerService.listCustomers({ email: metadata.email });
+                customer = customers[0];
+                console.log("Customer found by metadata email:", customer ? "Yes" : "No");
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Error getting customer from auth identity:", error);
+        }
+      }
+
+      if (!customer) {
+        console.log("Trying to find customer by checking all customers metadata");
+        try {
+          const allCustomers = await customerService.listCustomers();
+          for (const cust of allCustomers) {
+            if (cust.metadata && (cust.metadata as any).auth_identity_id === decoded.auth_identity_id) {
+              customer = cust;
+              console.log("Customer found by metadata auth_identity_id:", customer ? "Yes" : "No");
+              break;
+            }
+          }
+        } catch (error) {
+          console.log("Error searching all customers:", error);
+        }
+      }
+
+      if (!customer) {
+        console.log("Customer not found in database");
         return res.status(401).json({
           success: false,
           message: "Customer not found"
@@ -70,6 +125,7 @@ async function authenticateCustomer(
         customer_id: customer.id,
         email: customer.email
       };
+      console.log("User object set:", req.user);
 
       next();
     } catch (error) {
@@ -98,14 +154,14 @@ async function optionalAuthenticateCustomer(
 ) {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       next();
       return;
     }
 
     const token = authHeader.substring(7);
-    
+
     if (!token) {
       next();
       return;
@@ -114,11 +170,55 @@ async function optionalAuthenticateCustomer(
     try {
       const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
       const decoded = jwt.verify(token, JWT_SECRET) as any;
-      
-      if (decoded && decoded.customer_id) {
+
+      if (decoded && decoded.auth_identity_id) {
         const customerService = req.scope.resolve("customer");
-        const customer = await customerService.retrieveCustomer(decoded.customer_id);
-        
+        let customer: any = null;
+
+        // First try: if actor_id is not empty, use it as customer_id
+        if (decoded.actor_id && decoded.actor_id.trim() !== '') {
+          try {
+            customer = await customerService.retrieveCustomer(decoded.actor_id);
+          } catch (error) {
+            console.warn("Optional authentication - error getting customer by actor_id:", error);
+          }
+        }
+
+        // Second try: get auth identity and find customer by email
+        if (!customer) {
+          const authService = req.scope.resolve("auth");
+
+          try {
+            const authIdentity = await authService.retrieveAuthIdentity(decoded.auth_identity_id);
+
+            if (authIdentity && authIdentity.app_metadata) {
+              const metadata = authIdentity.app_metadata as any;
+              if (metadata.email) {
+                const customers = await customerService.listCustomers({ email: metadata.email });
+                customer = customers[0];
+              }
+            }
+          } catch (error) {
+            console.warn("Optional authentication - error retrieving auth identity:", error);
+          }
+        }
+
+        // Third try: Since we can't get email from auth identity, let's try to find the customer
+        // by looking at all customers and checking if any have the same auth_identity_id in their metadata
+        if (!customer) {
+          try {
+            const allCustomers = await customerService.listCustomers();
+            for (const cust of allCustomers) {
+              if (cust.metadata && (cust.metadata as any).auth_identity_id === decoded.auth_identity_id) {
+                customer = cust;
+                break;
+              }
+            }
+          } catch (error) {
+            console.warn("Optional authentication - error searching all customers:", error);
+          }
+        }
+
         if (customer) {
           req.user = {
             customer_id: customer.id,
@@ -141,6 +241,10 @@ export default defineMiddlewares({
   routes: [
     {
       matcher: "/store/auth/logout",
+      middlewares: [authenticateCustomer],
+    },
+    {
+      matcher: "/store/auth/me",
       middlewares: [authenticateCustomer],
     },
     {
