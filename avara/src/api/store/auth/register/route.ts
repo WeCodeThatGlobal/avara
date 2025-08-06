@@ -78,12 +78,28 @@ export async function POST(
         });
       }
 
-      // Create customer
+      // Create customer with auth_identity_id in metadata
       const customerService = req.scope.resolve("customer");
+      
+      // Extract auth_identity_id from the register token
+      const authService = req.scope.resolve("auth");
+      let authIdentityId = null;
+      
+      try {
+        const jwt = require('jsonwebtoken');
+        const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+        const decoded = jwt.verify(registerToken, JWT_SECRET) as any;
+        authIdentityId = decoded.auth_identity_id;
+        console.log("Extracted auth_identity_id from register token:", authIdentityId);
+      } catch (error) {
+        console.error("Error decoding register token:", error);
+      }
+      
       const customer = await customerService.createCustomers({
         email,
         first_name: name.split(' ')[0] || name,
-        last_name: name.split(' ').slice(1).join(' ') || ''
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        metadata: authIdentityId ? { auth_identity_id: authIdentityId } : {}
       });
 
       return res.status(201).json({

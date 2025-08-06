@@ -68,10 +68,23 @@ export async function POST(
         });
       }
 
-      // Update last login timestamp
+      // Extract auth_identity_id from the login token
+      let authIdentityId = null;
+      try {
+        const jwt = require('jsonwebtoken');
+        const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        authIdentityId = decoded.auth_identity_id;
+        console.log("Extracted auth_identity_id from login token:", authIdentityId);
+      } catch (error) {
+        console.error("Error decoding login token:", error);
+      }
+
+      // Update customer metadata with auth_identity_id and last login timestamp
       await customerService.updateCustomers(customer.id, {
         metadata: {
           ...customer.metadata,
+          auth_identity_id: authIdentityId,
           last_login: new Date().toISOString()
         }
       });
