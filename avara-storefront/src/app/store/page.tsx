@@ -9,7 +9,7 @@ import { ROUTES } from "@lib/api";
 import { getApi } from "@lib/api-client";
 import ProductCard from "@modules/common/components/ProductCard";
 import Link from 'next/link';
-
+import Placeholder from "../../common/components/placeholders/ProductsNotAvailable";
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
@@ -283,7 +283,7 @@ export default function StorePage() {
               </div>
             )
           ) : error ? (
-            <div className="text-center text-red-500 py-8">{error}</div>
+            <Placeholder text="Error loading products. Please try again later." />
           ) : displayProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center w-full bg-white rounded-2xl py-16 px-4">
               <div className="p-5 bg-gray-100 rounded-full mb-5">
