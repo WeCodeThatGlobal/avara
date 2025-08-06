@@ -159,7 +159,7 @@ export async function checkAuthStatus(): Promise<AuthResponse> {
       headers['x-publishable-api-key'] = PUBLISHABLE_KEY;
     }
 
-    const response = await fetch(`${API_BASE_URL}/store/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/store/auth/me`, {
       method: 'GET',
       headers,
     });
