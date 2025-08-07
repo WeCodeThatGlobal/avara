@@ -271,5 +271,9 @@ export default defineMiddlewares({
       matcher: "/store/orders",
       middlewares: [authenticateCustomer],
     },
+    {
+      matcher: "/store/auth/forgot-password",
+      middlewares: [optionalAuthenticateCustomer],
+    },
   ],
 }) 
