@@ -1,0 +1,21 @@
+# Use Node.js 20 Alpine as base image
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache python3 make g++
+
+COPY avara/package*.json ./
+
+RUN npm ci --only=production
+
+COPY avara/ .
+
+# Build the application
+RUN npm run build
+
+# Expose port
+EXPOSE 9000
+
+# Start the application
+CMD ["npm", "start"] 
