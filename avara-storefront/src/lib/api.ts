@@ -2,6 +2,8 @@ import { getBaseURL } from "@lib/util/env";
 
 export const ROUTES = {
   PRODUCTS: "/store/products-store",
+  FORGOT_PASSWORD: "/store/auth/forgot-password",
+  RESET_PASSWORD: "/store/auth/reset-password"
 };
 
 export function getApiUrl(path: string) {
