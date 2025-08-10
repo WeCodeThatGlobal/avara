@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import ProductCard from "@modules/common/components/ProductCard";
 import { ROUTES, getApiUrl } from "@lib/api";
 import { getApi } from "@lib/api-client";
+import Placeholder from "../../../common/components/placeholders/ProductsNotAvailable";
 
 function getTimeLeft(targetDate: Date) {
   const now = new Date();
@@ -77,12 +78,11 @@ const DealOfTheDaySection: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {loading && <div className="col-span-4 text-center text-gray-400">Loading deals...</div>}
-          {error && <div className="col-span-4 text-center text-red-500">{error}</div>}
-          {!loading && !error && products.length === 0 && (
-            <div className="col-span-4 text-center text-gray-400">No deals available.</div>
+          {loading && <Placeholder text="Loading deals..." />}
+          {!loading && products.length === 0 && (
+            <Placeholder text="No deals available." />
           )}
-          {!loading && !error && products.map((product, idx) => (
+          {!loading && products.map((product, idx) => (
             <ProductCard key={product.id || idx} id={product.id || `deal-${idx}`} {...product} />
           ))}
         </div>
