@@ -23,7 +23,8 @@ export default function StorePage() {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; count: number }[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [sortBy, setSortBy] = useState('Featured');
   const maxPrice = 500;
@@ -45,6 +46,13 @@ export default function StorePage() {
         setError(err.message || "Unknown error");
         setLoading(false);
       });
+    // Fetch categories in parallel (non-blocking UI)
+    getApi(ROUTES.CATEGORIES)
+      .then((res: any) => (res.ok ? res.json() : Promise.reject(new Error("Failed to fetch categories"))))
+      .then((data: any) => {
+        setCategories(data.categories || []);
+      })
+      .catch(() => {});
   }, []);
 
   const displayProducts = useMemo(() => {
@@ -52,7 +60,7 @@ export default function StorePage() {
 
     // Category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(p => p.type && selectedCategories.includes(p.type.value));
+      filtered = filtered.filter((p) => p.category && selectedCategories.includes(p.category));
     }
 
     // Tag filter
@@ -60,9 +68,9 @@ export default function StorePage() {
       filtered = filtered.filter(p => p.tags && p.tags.some((tag: { value: string; }) => selectedTags.includes(tag.value)));
     }
 
-    // Weight filter
-    if (selectedWeights.length > 0) {
-      filtered = filtered.filter(p => p.tags && p.tags.some((tag: { value: string; }) => selectedWeights.includes(tag.value)));
+    // Size filter
+    if (selectedSizes.length > 0) {
+      filtered = filtered.filter(p => p.tags && p.tags.some((tag: { value: string; }) => selectedSizes.includes(tag.value)));
     }
 
     // Color filter 
@@ -71,21 +79,26 @@ export default function StorePage() {
     }
 
     // Price filter
-    filtered = filtered.filter(p => {
-      const priceInDollars = (p.variants?.[0]?.prices?.[0]?.amount || 0) / 100;
-      return priceInDollars >= priceRange[0] && priceInDollars <= priceRange[1];
+    filtered = filtered.filter((p) => {
+      if (!p.price) return true;
+      const priceNum = parseFloat(String(p.price).replace(/[^0-9.]/g, "")) || 0;
+      return priceNum >= priceRange[0] && priceNum <= priceRange[1];
     });
 
     // Sorting logic
     switch (sortBy) {
-      case 'Price: Low to High':
-        filtered.sort((a, b) => (a.variants?.[0]?.prices?.[0]?.amount || 0) - (b.variants?.[0]?.prices?.[0]?.amount || 0));
+      case 'Price: Low to High': {
+        const num = (p: any) => parseFloat(String(p.price || '').replace(/[^0-9.]/g, '')) || 0;
+        filtered.sort((a, b) => num(a) - num(b));
         break;
-      case 'Price: High to Low':
-        filtered.sort((a, b) => (b.variants?.[0]?.prices?.[0]?.amount || 0) - (a.variants?.[0]?.prices?.[0]?.amount || 0));
+      }
+      case 'Price: High to Low': {
+        const num = (p: any) => parseFloat(String(p.price || '').replace(/[^0-9.]/g, '')) || 0;
+        filtered.sort((a, b) => num(b) - num(a));
         break;
+      }
       case 'Newest':
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         break;
       case 'Featured':
       default:
@@ -93,7 +106,7 @@ export default function StorePage() {
     }
 
     return filtered;
-  }, [allProducts, selectedCategories, selectedTags, selectedWeights, selectedColors, priceRange, sortBy]);
+  }, [allProducts, selectedCategories, selectedTags, selectedSizes, selectedColors, priceRange, sortBy]);
 
 
   // Pagination State
@@ -116,7 +129,7 @@ export default function StorePage() {
   const handleColorToggle = (colorName: string) => setSelectedColors(prev => prev.includes(colorName) ? prev.filter(c => c !== colorName) : [...prev, colorName]);
   const handleTagToggle = (tag: string) => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   const handleCategoryToggle = (category: string) => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
-  const handleWeightToggle = (weight: string) => setSelectedWeights(prev => prev.includes(weight) ? prev.filter(w => w !== weight) : [...prev, weight]);
+  const handleSizeToggle = (size: string) => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const handlePriceChange = (value: number | number[]) => setPriceRange(value as [number, number]);
   const handleSortChange = (sortOption: string) => setSortBy(sortOption);
 
@@ -135,8 +148,7 @@ export default function StorePage() {
     { name: 'Bakery', items: '08 items', icon: '🧁', bgColor: '#fbefd1ff' },
   ];
 
-  const sidebarCategories = ['Clothes', 'Bags', 'Shoes', 'Cosmetics', 'Electrics', 'Phone', 'Watch'];
-  const weightOptions = ['200gm Pack', '500gm Pack', '1kg Pack', '5kg Pack', '10kg Pack'];
+  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
   const colors = [
     { name: 'light-blue', hex: '#A0C4FF' }, { name: 'pink', hex: '#FFADAD' }, { name: 'black', hex: '#000000' },
     { name: 'green', hex: '#45FF73' }, { name: 'orange', hex: '#FFD6A5' }, { name: 'magenta', hex: '#F972F7' },
@@ -176,23 +188,23 @@ export default function StorePage() {
           <div className="mb-10">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Category</h3>
             <div className="space-y-4">
-              {sidebarCategories.map((category) => (
-                <label key={category} className="flex items-center space-x-3 cursor-pointer">
-                  <input type="checkbox" checked={selectedCategories.includes(category)} onChange={() => handleCategoryToggle(category)} className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                  <span className="text-sm font-medium text-gray-700">{category}</span>
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center space-x-3 cursor-pointer">
+                  <input type="checkbox" checked={selectedCategories.includes(category.name)} onChange={() => handleCategoryToggle(category.name)} className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <span className="text-sm font-medium text-gray-700">{category.name}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Weight Filter */}
+          {/* Size Filter */}
           <div className="mb-10">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Weight</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Size</h3>
             <div className="space-y-4">
-              {weightOptions.map((weight) => (
-                <label key={weight} className="flex items-center space-x-3 cursor-pointer">
-                  <input type="checkbox" checked={selectedWeights.includes(weight)} onChange={() => handleWeightToggle(weight)} className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                  <span className="text-sm font-medium text-gray-700">{weight}</span>
+              {sizeOptions.map((size) => (
+                <label key={size} className="flex items-center space-x-3 cursor-pointer">
+                  <input type="checkbox" checked={selectedSizes.includes(size)} onChange={() => handleSizeToggle(size)} className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <span className="text-sm font-medium text-gray-700">{size}</span>
                 </label>
               ))}
             </div>
