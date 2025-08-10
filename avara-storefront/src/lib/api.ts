@@ -2,6 +2,7 @@ import { getBaseURL } from "@lib/util/env";
 
 export const ROUTES = {
   PRODUCTS: "/store/products-store",
+  CATEGORIES: "/store/categories",
 };
 
 export function getApiUrl(path: string) {
