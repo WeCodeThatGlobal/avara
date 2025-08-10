@@ -65,11 +65,27 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedWeight, setSelectedWeight] = useState('250g');
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('detail');
   const [mainImage, setMainImage] = useState('');
   const router = useRouter();
   const { addItem } = useCart();
+
+  const formatMoney = (amount: number, currency?: string) => {
+    const normalized = (amount || 0) / 100;
+    if (!currency) return `$${normalized.toFixed(2)}`;
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency.toUpperCase() }).format(normalized);
+    } catch (_) {
+      return `${currency.toUpperCase()} ${normalized.toFixed(2)}`;
+    }
+  };
+
+  const formatVariantPrice = (variant: any): string | null => {
+    const first = variant?.prices?.[0];
+    if (!first || typeof first.amount !== 'number') return null;
+    return formatMoney(first.amount, first.currency_code);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -82,7 +98,10 @@ export default function ProductPage({ params }: ProductPageProps) {
       })
       .then((data) => {
         setProduct(data.product);
-        setMainImage(data.product.image);
+        setMainImage((data.product.images && data.product.images[0]) || data.product.image);
+        if (data.product.variants && data.product.variants.length > 0) {
+          setSelectedVariantId(data.product.variants[0].id);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -93,17 +112,17 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   const handleAddToCart = () => {
     if (!product) return;
-    
+    const selectedVariant = (product.variants || []).find((v: any) => v.id === selectedVariantId) || (product.variants || [])[0];
+    const priceAmount = selectedVariant?.prices?.[0]?.amount || 0;
     const cartItem: Omit<CartItem, 'quantity'> = {
-      id: product.id,
-      name: product.title,
+      id: `${product.id}${selectedVariant ? `:${selectedVariant.id}` : ''}`,
+      name: `${product.title}${selectedVariant?.title ? ` - ${selectedVariant.title}` : ''}`,
       image: product.image,
-      price: parseFloat(product.price) || 0,
-      originalPrice: product.original_price ? parseFloat(product.original_price) : undefined,
+      price: priceAmount / 100,
+      originalPrice: undefined,
       category: product.category || 'General',
-      packInfo: selectedWeight,
+      packInfo: selectedVariant?.title || '',
     };
-    
     addItem(cartItem);
   };
 
@@ -150,7 +169,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             />
           </div>
           <div className="flex justify-center gap-4">
-            {productStaticDetails.thumbnails.map((thumb, idx) => (
+            {(product.images && product.images.length > 0 ? product.images : productStaticDetails.thumbnails).map((thumb: string, idx: number) => (
               <div 
                 key={idx} 
                 onClick={() => setMainImage(thumb)}
@@ -172,28 +191,50 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <span key={i} className={`text-xl ${i < Math.floor(product.rating || 4) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
               ))}
             </div>
-            <span className="text-gray-500">| {product.rating_count || 992} Ratings</span>
+            {product.rating_count && (
+              <span className="text-gray-500">| {product.rating_count} Ratings</span>
+            )}
           </div>
 
           <p className="text-gray-600 leading-relaxed">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quas nihil laboriosam voluptatem ab consectetur dolorum id, soluta sunt at culpa commodi totam quod natus qui!
+            {product.description || 'No description available.'}
           </p>
 
           <div className="space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-gray-900">${product.price}</span>
-              {discountPercentage > 0 && (
-                <span className="text-xl font-semibold text-red-500">-{discountPercentage}%</span>
-              )}
-            </div>
-            {product.original_price && (
-              <span className="text-lg text-gray-500">M.R.P: <span className="line-through">${product.original_price}</span></span>
-            )}
+            {(() => {
+              const selectedVariant = (product.variants || []).find((v: any) => v.id === selectedVariantId) || (product.variants || [])[0];
+              const display = formatVariantPrice(selectedVariant);
+              if (display) {
+                return (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900">{display}</span>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-semibold text-gray-500">Price not available</span>
+                </div>
+              );
+            })()}
           </div>
           
           <div className="flex items-center gap-6 text-sm pt-2">
-              <p>SKU: <span className="font-medium text-gray-800">{product.sku || productStaticDetails.sku}</span></p>
-              <p>Status: <span className="font-medium text-green-600">In Stock</span></p>
+            <p>
+              SKU: {(() => {
+                const v = (product.variants || []).find((vv: any) => vv.id === selectedVariantId) || (product.variants || [])[0];
+                return <span className="font-medium text-gray-800">{v?.sku || '-'}</span>;
+              })()}
+            </p>
+            <p>
+              Status: {(() => {
+                const v = (product.variants || []).find((vv: any) => vv.id === selectedVariantId) || (product.variants || [])[0];
+                const available = v?.available;
+                const label = available ? 'In Stock' : 'Out of Stock';
+                const cls = available ? 'text-green-600' : 'text-red-600';
+                return <span className={`font-medium ${cls}`}>{label}</span>;
+              })()}
+            </p>
           </div>
           
           <div className="border-t border-b border-gray-200 py-4 space-y-2">
@@ -205,24 +246,28 @@ export default function ProductPage({ params }: ProductPageProps) {
             ))}
           </div>
 
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Weight</h3>
-            <div className="flex gap-3">
-              {['250g', '500g', '1kg', '2kg'].map((weight) => (
-                <button
-                  key={weight}
-                  onClick={() => setSelectedWeight(weight)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                    selectedWeight === weight
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
-                  }`}
-                >
-                  {weight}
-                </button>
-              ))}
+          {product.variants && product.variants.length > 0 && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Variants</h3>
+                <div className="flex gap-3 flex-wrap">
+                  {product.variants.map((v: any) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariantId(v.id)}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        selectedVariantId === v.id
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
+                      }`}
+                    >
+                      {v.title || 'Variant'}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="flex items-center gap-4">
             <div className="flex items-center border border-gray-300 rounded-lg">
