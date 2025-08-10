@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: avara-postgres
+    environment:
+      POSTGRES_DB: avara
+      POSTGRES_USER: avara
+      POSTGRES_PASSWORD: avara123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - avara-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avara"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Medusa Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: avara-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://avara:avara123@postgres:5432/avara
+      STORE_CORS: http://localhost:8000,http://storefront:8000
+      ADMIN_CORS: http://localhost:7001,http://admin:7001
+      AUTH_CORS: http://localhost:8000,http://storefront:8000
+      JWT_SECRET: your-jwt-secret-key-here
+      COOKIE_SECRET: your-cookie-secret-key-here
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - avara-network
+    volumes:
+      - ./avara:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Next.js Storefront
+  storefront:
+    build:
+      context: .
+      dockerfile: Dockerfile.storefront
+    container_name: avara-storefront
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://backend:9000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend
+    networks:
+      - avara-network
+    volumes:
+      - ./avara-storefront:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: avara-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - avara-network
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  avara-network:
+    driver: bridge 
