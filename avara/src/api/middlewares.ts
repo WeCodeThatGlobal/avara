@@ -272,6 +272,14 @@ export default defineMiddlewares({
       middlewares: [authenticateCustomer],
     },
     {
+      matcher: "/store/customer/orders",
+      middlewares: [authenticateCustomer],
+    },
+    {
+      matcher: "/store/customer/orders/*",
+      middlewares: [authenticateCustomer],
+    },
+    {
       matcher: "/store/auth/forgot-password",
       middlewares: [optionalAuthenticateCustomer],
     },
