@@ -2,6 +2,7 @@ import { getBaseURL } from "@lib/util/env";
 
 export const ROUTES = {
   PRODUCTS: "/store/products-store",
+  CATEGORIES: "/store/categories",
   FORGOT_PASSWORD: "/store/auth/forgot-password",
   RESET_PASSWORD: "/store/auth/reset-password"
 };
