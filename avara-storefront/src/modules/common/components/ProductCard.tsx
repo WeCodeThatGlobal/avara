@@ -8,11 +8,11 @@ interface ProductCardProps {
   id: string;
   image: string;
   name: string;
-  category: string;
-  price: string;
+  category?: string;
+  price?: string;
   oldPrice?: string;
-  rating: number;
-  packInfo: string;
+  rating?: number;
+  packInfo?: string;
   stockStatus?: string;
   stockStatusColor?: string;
   badge?: string;
@@ -20,10 +20,9 @@ interface ProductCardProps {
   description?: string;
 }
 
-const icons = [
+const baseIcons = [
   <HiOutlineEye key="eye" className="w-6 h-6" />,
   <HiOutlineArrowsRightLeft key="compare" className="w-6 h-6" />,
-  <HiOutlineShoppingBag key="cart" className="w-6 h-6" />,
 ];
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -57,14 +56,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const handleAddToCart = () => {
+    if (!price) return;
     const cartItem: Omit<CartItem, 'quantity'> = {
       id,
       name,
       image,
       price: extractPrice(price),
       originalPrice: extractOriginalPrice(oldPrice),
-      category,
-      packInfo,
+      category: category || '',
+      packInfo: packInfo || '',
     };
     
     addItem(cartItem);
@@ -99,13 +99,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ${isListView 
             ? 'bottom-0 flex-row justify-center w-full' 
             : 'left-1/2 -translate-x-1/2 bottom-2 translate-y-4 group-hover:translate-y-0'}`}>
-          {icons.map((icon, idx) => (
+          {[...baseIcons, ...(price ? [<HiOutlineShoppingBag key="cart" className="w-6 h-6" />] : [])].map((icon, idx) => (
             <button
               key={idx}
               className="bg-white border border-gray-200 rounded-xl p-2 shadow hover:bg-gray-100 focus:outline-none"
               tabIndex={-1}
-              aria-label={idx === 3 ? "Add to cart" : "Product action"}
-              onClick={idx === 3 ? handleAddToCart : undefined}
+              aria-label={price && idx === 2 ? "Add to cart" : "Product action"}
+              onClick={price && idx === 2 ? handleAddToCart : undefined}
             >
               {icon}
             </button>
@@ -115,14 +115,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       
       {/* Content Section */}
       <div className={`${isListView ? 'flex-1' : 'w-full text-left mt-2'}`}>
-        <div className="text-xs text-gray-400 mb-1">{category}</div>
+        {category && <div className="text-xs text-gray-400 mb-1">{category}</div>}
         
         {/* Rating */}
         <div className="flex items-center gap-1 mb-1">
           {[...Array(5)].map((_, i) => (
             <svg
               key={i}
-              className={`w-4 h-4 ${i < rating ? "text-orange-400" : "text-gray-300"}`}
+              className={`w-4 h-4 ${i < (rating ?? 0) ? "text-orange-400" : "text-gray-300"}`}
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -148,14 +148,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
         
         {/* Price and Stock Info */}
-        <div className="mt-2">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg font-bold text-gray-800">{price}</span>
-            {oldPrice && <span className="text-sm text-gray-400 line-through">{oldPrice}</span>}
-            {stockStatus && <span className={`text-xs font-medium ${stockStatusColor}`}>{stockStatus}</span>}
+        {price && (
+          <div className="mt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-bold text-gray-800">{price}</span>
+              {oldPrice && <span className="text-sm text-gray-400 line-through">{oldPrice}</span>}
+              {stockStatus && <span className={`text-xs font-medium ${stockStatusColor}`}>{stockStatus}</span>}
+            </div>
+            {packInfo && <div className="text-xs text-gray-400">{packInfo}</div>}
           </div>
-          <div className="text-xs text-gray-400">{packInfo}</div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -11,8 +11,8 @@ export async function GET(
     const productService = req.scope.resolve("product");
     
     const products = await productService.listProducts({}, { 
-      take: 100, 
-      relations: ["variants", "images", "categories"] 
+      take: limit, 
+      relations: ["images", "categories"] 
     });
 
     let filteredProducts = products;
@@ -34,25 +34,13 @@ export async function GET(
     }
 
     const formattedProducts = filteredProducts.map((product: any) => {
-      const variant = product.variants?.[0];
-      const price = variant?.prices?.[0];
-
       return {
         id: product.id,
+        name: product.title,
         description: product.description,
         image: product.images?.[0]?.url || "",
-        name: product.title,
         category: product.categories?.[0]?.name || "",
-        price: price?.amount
-          ? `$${(price.amount / 100).toFixed(2)}`
-          : "",
-        oldPrice: null,
-        rating: 4,
-        packInfo: variant?.title || "",
-        badge: type === "deal_of_the_day" ? "DEAL" : type === "new_arrivals" ? "NEW" : null,
-        stockStatus: variant?.inventory_quantity > 0 ? "In Stock" : "Out Of Stock",
-        stockStatusColor: variant?.inventory_quantity > 0 ? "text-green-500" : "text-gray-400",
-        type: product.metadata?.tags || null,
+        rating: product.metadata?.rating ?? 4,
       };
     });
 
