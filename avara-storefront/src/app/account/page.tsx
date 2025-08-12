@@ -94,7 +94,7 @@ const AccountPage = () => {
     }
 
     if (!authState.isAuthenticated) {
-        return null; // Will redirect to login
+        return null;
     }
 
     return (
@@ -241,7 +241,7 @@ const AccountPage = () => {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                             <div className="space-y-3">
                                 <Link 
-                                    href="/orders" 
+                                    href="/account/orders" 
                                     className="flex items-center p-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                                 >
                                     <HiOutlineDocumentText className="w-5 h-5 mr-3" />

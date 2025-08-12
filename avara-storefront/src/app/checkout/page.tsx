@@ -1,6 +1,9 @@
 "use client";
-import React, { useState, ChangeEvent, FocusEvent, FormEvent } from 'react';
-import { useCart } from "../../lib/context/CartContext"; 
+import React, { useState, ChangeEvent, FocusEvent, FormEvent, useEffect } from 'react';
+import { useCart } from "../../lib/context/CartContext";
+import { useAuth } from "../../lib/context/AuthContext";
+import { createOrder } from "../../lib/api/orders";
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
     HiOutlineArrowLeft,
@@ -17,9 +20,19 @@ import InputField from '../../common/components/input/InputField';
 
 
 const CheckoutPage = () => {
-    const { state: cartState } = useCart();
+    const router = useRouter();
+    const { state: cartState, clearCart } = useCart();
+    const { state: authState } = useAuth();
     const [showCouponInput, setShowCouponInput] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('cash'); // cash or card
+    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [orderError, setOrderError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!authState.isLoading && !authState.isAuthenticated) {
+            router.push('/login');
+        }
+    }, [authState.isLoading, authState.isAuthenticated, router]);
 
     type FormData = {
         [key: string]: string;
@@ -121,12 +134,63 @@ const CheckoutPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handlePlaceOrder = (e: FormEvent<HTMLFormElement>) => {
+    const handlePlaceOrder = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (validateForm()) {
-            console.log('Form is valid, placing order:', formData);
-        } else {
-            console.log('Form is invalid, please check the errors.');
+        setOrderError(null);
+        if (!authState.isAuthenticated) {
+            router.push('/login');
+            return;
+        }
+
+        if (!validateForm()) {
+            return;
+        }
+
+        if (!cartState || !cartState.items || cartState.items.length === 0) {
+            setOrderError('Your cart is empty.');
+            return;
+        }
+
+        try {
+            setIsPlacingOrder(true);
+            const subtotal = cartState.totalPrice || 0;
+            const shipping = 0;
+            const total = subtotal + shipping;
+
+            const payload = {
+                items: cartState.items.map((i) => ({
+                    id: i.id,
+                    name: i.name,
+                    price: i.price,
+                    quantity: i.quantity,
+                    image: i.image,
+                })),
+                subtotal,
+                shipping,
+                total,
+                payment_method: paymentMethod === 'card' ? 'card' as const : 'cash' as const,
+                billing_details: {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    address: formData.address,
+                    country: formData.country,
+                    postCode: formData.postCode,
+                },
+            };
+
+            const result = await createOrder(payload);
+            if (result.success && result.data?.order) {
+                clearCart();
+                router.push(`/account/orders?new=${encodeURIComponent(result.data.order.id)}`);
+            } else {
+                setOrderError(result.message || 'Failed to place order');
+            }
+        } catch (err) {
+            console.error('Place order error:', err);
+            setOrderError('Failed to place order');
+        } finally {
+            setIsPlacingOrder(false);
         }
     };
 
@@ -254,9 +318,12 @@ const CheckoutPage = () => {
                                 </div>
                             </div>
                             <p className="text-xs text-gray-500 mt-6">Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="#" className="underline">privacy policy</a>.</p>
-                            <button type="submit" className="w-full mt-6 bg-blue-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
+                            {orderError && (
+                                <p className="text-red-600 text-sm mt-2">{orderError}</p>
+                            )}
+                            <button type="submit" disabled={isPlacingOrder} className="w-full mt-6 bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white py-4 px-6 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
                                 <HiOutlineLockClosed className="w-5 h-5" />
-                                Place Order
+                                {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
                             </button>
                         </div>
                     </div>

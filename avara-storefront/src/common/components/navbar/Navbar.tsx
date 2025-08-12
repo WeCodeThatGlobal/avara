@@ -142,7 +142,7 @@ const Navbar = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/orders" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-500 hover:bg-gray-100 rounded-md transition-colors">
+                    <Link href="/account/orders" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-500 hover:bg-gray-100 rounded-md transition-colors">
                       <HiOutlineDocumentText className="w-4 h-4 mr-2" />
                       Orders
                     </Link>
